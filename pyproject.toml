@@ -1,0 +1,31 @@
+[project]
+authors = [{ name = "Christy Lin", email = "cy93lin@bu.edu" }]
+dependencies = []
+description = "Add a short description here"
+name = "ai-ds-project-sequence-optimization-with-codon-bert-code"
+requires-python = ">= 3.11"
+version = "0.1.0"
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.pixi.project]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["osx-64"]
+
+[tool.pixi.system-requirements]
+cuda = "12.0"
+
+[tool.pixi.pypi-dependencies]
+ai_ds_project_sequence_optimization_with_codon_bert_code = { path = ".", editable = true }
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+python = ">=3.13.7,<3.14"
+ipykernel = ">=6.30.1,<7"
+biopython = ">=1.85,<2"
+transformers = ">=4.56.2,<5"
+pytorch-cpu = ">=2.8.0,<3"
+ipywidgets = ">=8.1.7,<9"
