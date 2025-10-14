@@ -1,8 +1,8 @@
 [project]
-authors = [{ name = "Christy Lin", email = "cy93lin@bu.edu" }]
+authors = [{ name = "Christy Lin", email = "christy.lin@apexignite.org" }]
 dependencies = []
-description = "Add a short description here"
-name = "ai-ds-project-sequence-optimization-with-codon-bert-code"
+description = "Machine learning project to optimize DNA, mRNA and amino acid sequences using Codon language models"
+name = "Sequence-Optimization-with-CodonBERT"
 requires-python = ">= 3.11"
 version = "0.1.0"
 
@@ -11,21 +11,24 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [tool.pixi.project]
-channels = ["https://prefix.dev/conda-forge"]
+channels = ["conda-forge"]
 platforms = ["osx-64"]
 
 [tool.pixi.system-requirements]
 cuda = "12.0"
 
 [tool.pixi.pypi-dependencies]
-ai_ds_project_sequence_optimization_with_codon_bert_code = { path = ".", editable = true }
+sequence_optimization_with_codonbert = { path = ".", editable = true }
 
 [tool.pixi.tasks]
 
 [tool.pixi.dependencies]
-python = ">=3.13.7,<3.14"
-ipykernel = ">=6.30.1,<7"
+python = ">=3.13.0,<3.15"
+boto3 = ">=1.40.51,<2"
 biopython = ">=1.85,<2"
-transformers = ">=4.56.2,<5"
-pytorch-cpu = ">=2.8.0,<3"
+ipykernel = ">=7.0.1,<8"
+transformers = ">=2.1.1,<3"
+pytorch = ">=2.8.0,<3"
 ipywidgets = ">=8.1.7,<9"
+pandas = ">=2.3.3,<3"
+psycopg2 = ">=2.9.10,<3"
