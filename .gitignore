@@ -1,6 +1,8 @@
 data/*
+models/*
 
 # pixi environments
 .pixi
 *.egg-info
 __pycache__
+.DS_Store
