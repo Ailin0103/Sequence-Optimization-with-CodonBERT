@@ -165,7 +165,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/nest-asyncio-1.6.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/networkx-3.5-pyhe01879c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/nlohmann_json-3.12.0-h53ec75d_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-64/numpy-2.3.3-py313ha99c057_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/numpy-2.3.4-py313ha99c057_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/openjpeg-2.5.4-h87e8dc5_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/openldap-2.6.10-hd8a590d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/openssl-3.5.4-h230baf5_0.conda
@@ -2386,25 +2386,27 @@ packages:
   purls: []
   size: 136667
   timestamp: 1758194361656
-- conda: https://conda.anaconda.org/conda-forge/osx-64/numpy-2.3.3-py313ha99c057_0.conda
-  sha256: ab31a1c9a75cce696324aa76411dbd0b5800f9b5d31144af05b4364548df6f27
-  md5: b61af3ab2e0156a2f726faa9cd6245fb
+- conda: https://conda.anaconda.org/conda-forge/osx-64/numpy-2.3.4-py313ha99c057_0.conda
+  sha256: 97856ffabea4a84badba72515178ad9cf5e8def837203e97bf78a59ce21c8b5f
+  md5: 8f1926ac8ba86847cde84b477b1bdf4d
   depends:
   - python
-  - libcxx >=19
   - __osx >=10.13
-  - libcblas >=3.9.0,<4.0a0
+  - libcxx >=19
   - liblapack >=3.9.0,<4.0a0
   - libblas >=3.9.0,<4.0a0
   - python_abi 3.13.* *_cp313
+  - libcblas >=3.9.0,<4.0a0
   constrains:
   - numpy-base <0a0
+  arch: x86_64
+  platform: osx
   license: BSD-3-Clause
   license_family: BSD
   purls:
   - pkg:pypi/numpy?source=hash-mapping
-  size: 8035298
-  timestamp: 1757504954727
+  size: 8038084
+  timestamp: 1761161603414
 - conda: https://conda.anaconda.org/conda-forge/osx-64/openjpeg-2.5.4-h87e8dc5_0.conda
   sha256: fdf4708a4e45b5fd9868646dd0c0a78429f4c0b8be490196c975e06403a841d0
   md5: a67d3517ebbf615b91ef9fdc99934e0c
@@ -3123,7 +3125,7 @@ packages:
 - pypi: .
   name: sequence-optimization-with-codonbert
   version: 0.1.0
-  sha256: 0a174a5b6d51471957a39bd8cf08c1c683e9ca1c3716c12aafe8071ea14cc3ed
+  sha256: 6ec967725846b83be3d65d4a7698e2b1b906204b4d4dba3d81b7033b93ae8797
   requires_python: '>=3.11'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-80.9.0-pyhff2d567_0.conda
