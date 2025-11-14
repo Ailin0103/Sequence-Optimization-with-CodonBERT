@@ -2399,8 +2399,6 @@ packages:
   - libcblas >=3.9.0,<4.0a0
   constrains:
   - numpy-base <0a0
-  arch: x86_64
-  platform: osx
   license: BSD-3-Clause
   license_family: BSD
   purls:
@@ -3125,7 +3123,7 @@ packages:
 - pypi: .
   name: sequence-optimization-with-codonbert
   version: 0.1.0
-  sha256: 6ec967725846b83be3d65d4a7698e2b1b906204b4d4dba3d81b7033b93ae8797
+  sha256: 181f52d49bd8d8c52e11f8dbc404877b743ccd3715e1f525a7d9baa7bab6f3bc
   requires_python: '>=3.11'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-80.9.0-pyhff2d567_0.conda
