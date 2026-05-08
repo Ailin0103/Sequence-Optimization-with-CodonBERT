@@ -40,7 +40,8 @@ def get_secret(
         ClientError: If there is an error with the AWS Secrets Manager client.
     """
     # Create a Secrets Manager client
-    session = Session(profile_name=profile_name)
+    #session = Session(profile_name=profile_name)
+    session = Session(profile_name=PROFILE_NAME)
     client = session.client(service_name="secretsmanager", region_name=region_name)
     client = session.client(service_name="secretsmanager", region_name=region_name)
 
