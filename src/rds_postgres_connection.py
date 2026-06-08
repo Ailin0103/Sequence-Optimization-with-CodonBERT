@@ -19,8 +19,8 @@ from psycopg2 import sql
 from psycopg2.extensions import connection
 from psycopg2.extras import execute_values
 
-from sequence_optimization_with_codonbert.aws_auth import get_secret
-from sequence_optimization_with_codonbert.config import (
+from aws_auth import get_secret
+from config import (
     DATABASE_NAME,
     HOST_ENDPOINT,
     PORT,

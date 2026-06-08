@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 from boto3.session import Session
 from botocore.exceptions import ClientError
 
-from sequence_optimization_with_codonbert.config import (
+from config import (
     PROFILE_NAME,
     REGION_NAME,
     SECRET_NAME,
