@@ -177,14 +177,7 @@ def run_codonbert_inference(df, tokenizer, model, device):
 
             outputs = model(**inputs, output_hidden_states=True)
 
-        # MLM logits
-
-        mlm_logits = outputs.prediction_logits.detach().cpu()
-
-        # Last hidden layer embeddings
-
-        token_embeddings = outputs.hidden_states[-1].detach().cpu()
-
+       
         # Mean pooled embedding: one 768-d vector per sequence
 
         pooled = mean_pool_embedding(
@@ -273,7 +266,7 @@ def main():
 
     total_kept = 0
 
-    START_BATCH = 1553
+    START_BATCH = 1554
     SKIP_KEPT = (START_BATCH - 1) * S3_BATCH_SIZE
     batch_num = START_BATCH - 1
 

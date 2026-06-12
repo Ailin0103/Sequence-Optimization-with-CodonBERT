@@ -248,8 +248,8 @@ def main():
 
     # ========== Configuration ==========
     MODEL_NAME = "lhallee/CodonBERT"
-    DATA_PATH = Path(__file__).parent.parent.parent / "data" / "oligos.fasta"
-    OUTPUT_DIR = Path(__file__).parent.parent.parent / "models" / "finetuned_codonbert"
+    DATA_PATH = Path(__file__).parent.parent / "data" / "oligos.fasta"
+    OUTPUT_DIR = Path(__file__).parent.parent / "models" / "finetuned_codonbert"
 
     # Training hyperparameters
     BATCH_SIZE = 4  # Reduced for stability
@@ -261,7 +261,12 @@ def main():
     TRAIN_SPLIT = 0.8
 
     # Device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(
+    "mps" if torch.backends.mps.is_available() #M4 GPU
+    else "cuda" if torch.cuda.is_available()
+    else "cpu"
+)
     print(f"Using device: {device}")
 
     # ========== Load Data ==========
