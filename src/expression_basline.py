@@ -65,6 +65,8 @@ def format_sequence_for_codonbert(seq):
     if not all(c in "ATCG" for c in seq):
         return None
 
+    seq = seq.replace("T", "U")  # DNA -> RNA
+
     codons = [seq[i:i + 3] for i in range(0, len(seq), 3)]
     return " ".join(codons)
 

@@ -3,6 +3,7 @@ models/*
 
 # pixi environments
 .pixi
+.cache/
 *.egg-info
 __pycache__
 .DS_Store
