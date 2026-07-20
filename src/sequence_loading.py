@@ -240,6 +240,35 @@ def write_df_to_s3_parquet(df, bucket, key):
 
 # =====================
 
+# Read parquet from S3
+
+# =====================
+
+
+def read_df_from_s3_parquet(bucket, key):
+
+    obj = s3.get_object(Bucket=bucket, Key=key)
+
+    body = obj["Body"].read()
+
+    return pd.read_parquet(io.BytesIO(body))
+
+
+def load_embedding_batch_from_s3(batch_num=1, bucket=BUCKET, prefix=OUTPUT_PREFIX):
+
+    key = f"{prefix}embeddings_batch_{batch_num:05d}.parquet"
+
+    df = read_df_from_s3_parquet(bucket, key)
+
+    print(f"Loaded {len(df)} rows from s3://{bucket}/{key}")
+
+    return df
+
+
+
+
+# =====================
+
 # Main pipeline
 
 # =====================
