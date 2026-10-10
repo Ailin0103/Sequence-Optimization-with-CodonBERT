@@ -20,7 +20,7 @@ from psycopg2.extensions import connection
 from psycopg2.extras import execute_values
 
 from aws_auth import get_secret
-from config import (
+from .config import (
     DATABASE_NAME,
     HOST_ENDPOINT,
     PORT,

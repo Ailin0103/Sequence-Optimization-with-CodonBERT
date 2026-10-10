@@ -8,7 +8,7 @@ from Bio.Seq import Seq
 from pathlib import Path
 from transformers import AutoTokenizer, AutoModelForPreTraining
 from boto3.session import Session
-from config import PROFILE_NAME, REGION_NAME
+from .config import PROFILE_NAME, REGION_NAME
 from tqdm import tqdm
 
 # =========================

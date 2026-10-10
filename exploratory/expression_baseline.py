@@ -81,35 +81,8 @@ def mean_pool_embedding(hidden_states, attention_mask):
     return summed / counts
 
 
-def compute_codonbert_embeddings(sequences, tokenizer, model, device):
-    all_embeddings = []
 
-    for start in tqdm(range(0, len(sequences), MODEL_BATCH_SIZE), desc="Embedding"):
-        batch_seqs = sequences[start:start + MODEL_BATCH_SIZE]
-
-        inputs = tokenizer(
-            batch_seqs,
-            return_tensors="pt",
-            truncation=True,
-            padding=True,
-            max_length=MAX_LEN,
-        ).to(device)
-
-        with torch.no_grad():
-            outputs = model(**inputs)
-
-        #pooled = mean_pool_embedding(
-        #    outputs.last_hidden_state,
-        #    inputs["attention_mask"]
-        #).detach().cpu().numpy()
-
-        # CLS embedding: one 768-d vector per sequence
-        pooled = outputs.last_hidden_state[:, 0, :].detach().cpu().numpy()
-        all_embeddings.append(pooled)
-
-    return np.vstack(all_embeddings)
-
-def compute_codonbert_embeddings_MFE(sequences, tokenizer, model, device, pooling="mean", first_k_tokens=None):
+def compute_codonbert_embeddings(sequences, tokenizer, model, device, pooling="mean", first_k_tokens=None):
     all_embeddings = []
 
     for start in tqdm(range(0, len(sequences), MODEL_BATCH_SIZE), desc=f"Embedding-{pooling}-{first_k_tokens}"):
@@ -121,8 +94,11 @@ def compute_codonbert_embeddings_MFE(sequences, tokenizer, model, device, poolin
             truncation=True,
             padding=True,
             max_length=MAX_LEN,
+            return_special_tokens_mask = True
         ).to(device)
 
+        special_tokens_mask = inputs.pop("special_tokens_mask").to(device)
+        inputs = inputs.to(device)
         with torch.no_grad():
             outputs = model(**inputs)
 
@@ -133,9 +109,15 @@ def compute_codonbert_embeddings_MFE(sequences, tokenizer, model, device, poolin
             pooled = hidden[:, 0, :]
 
         elif pooling == "mean":
-            mask = attention_mask.unsqueeze(-1)
-            pooled = (hidden * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1)
+            # keep real codon tokens only:
+            # remove padding + [CLS] + [SEP]
+            token_mask = attention_mask * (1 - special_tokens_mask)
+            mask = token_mask.unsqueeze(-1)
 
+            pooled = (
+                (hidden * mask).sum(dim=1)
+                / mask.sum(dim=1).clamp(min=1)
+            )
         elif pooling == "first_k_mean":
             # token 0 is [CLS], so real codon tokens start at 1
             # take tokens 1 to first_k_tokens
@@ -187,15 +169,6 @@ def main():
 
     # Load data
     df = pd.read_csv(DATA_PATH)
-    df["protein_mean"] = df[
-    [
-        "log.prot.repOne",
-        "log.prot.repTwo",
-        "log.prot.repThree",
-        "log.prot.repFour",
-    ]
-    ].mean(axis=1)  
-    
     df = df[[SEQ_COL, TARGET_COL, STRUCTURE_TARGET_COL]].copy()
     df = df.dropna(subset=[SEQ_COL, TARGET_COL, STRUCTURE_TARGET_COL])
 
@@ -228,7 +201,7 @@ def main():
         print(f"Experiment: {exp_name}")
         print("=" * 60)
 
-        X = compute_codonbert_embeddings_MFE(
+        X = compute_codonbert_embeddings(
             sequences,
             tokenizer,
             model,
@@ -358,7 +331,32 @@ def main():
     print("\nSaved results to:", output_path)
     print(results_df)
 
+    from sklearn.decomposition import PCA
+    import matplotlib.pyplot as plt
 
+    pca = PCA(n_components=2)
+    X_pca = pca.fit_transform(X)
+
+    print("Explained variance ratio:", pca.explained_variance_ratio_)
+    print("Total explained variance:", pca.explained_variance_ratio_.sum())
+
+    plt.figure(figsize=(8, 6))
+
+    sc = plt.scatter(
+        X_pca[:, 0],
+        X_pca[:, 1],
+        c=y_expr,
+        s=10,
+        alpha=0.6,
+    )
+
+    plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]:.1%})")
+    plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]:.1%})")
+    plt.title("Frozen CodonBERT Embeddings")
+
+    plt.colorbar(sc, label="Protein production")
+    plt.tight_layout()
+    plt.show()
 if __name__ == "__main__":
     
     main()
