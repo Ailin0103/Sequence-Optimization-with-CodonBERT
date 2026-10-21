@@ -2,6 +2,8 @@
 
 Supervised fine-tuning and evaluation of pretrained CodonBERT on experimentally measured protein expression.
 
+**[Live Demo](https://sequence-optimization-with-codonbert-b5bxoq4emkdx4hufutczmn.streamlit.app/)** · **[Hugging Face Model](https://huggingface.co/Ailin0103/CodonBERT-Cambray-expression-regression)**
+
 ## CodonBERT background
 
 [CodonBERT](https://huggingface.co/lhallee/CodonBERT) is a pretrained codon-level transformer for representations of coding/mRNA sequences. Codon tokenization follows biologically meaningful triplets rather than arbitrary individual characters. Pretraining provides a starting representation; accurate expression prediction requires task-specific supervision and evaluation.
