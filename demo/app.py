@@ -47,6 +47,24 @@ def predict(sequence):
     return round(prediction, 4), f'{length} nucleotides · {length // 3} codons. Output is on the original clean.lin.prot.mean scale.'
 
 
+def render_score_bar(expression=None):
+    position = 0.0 if expression is None else (max(1.0, min(100.0, expression)) - 1.0) / 99.0 * 100
+    st.markdown(f"""
+<div style="margin:16px 0 24px">
+  <div style="font-weight:600;margin-bottom:12px">Expression score · 1–100</div>
+  <div role="img" aria-label="Expression scale from 1 to 100" style="height:18px;border-radius:9px;background:#e5e7eb;overflow:hidden">
+    <div style="height:100%;width:{position:.4f}%;background:#14b8a6;border-radius:9px"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:18px;font-weight:700">
+    <span>1</span><span>100</span>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-size:13px;opacity:0.7">
+    <span>Lower expression</span><span>Higher expression</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+
 def main():
     st.set_page_config(page_title='CodonBERT · Protein expression', page_icon='🧬', layout='centered')
     st.caption('CODONBERT · RESEARCH DEMO')
@@ -61,22 +79,23 @@ def main():
         submitted = st.form_submit_button('Predict expression', type='primary')
     st.caption('Technical example: ATGGCC. This short example checks the interface; it is not a validated biological design.')
     if submitted:
+        st.session_state.pop('expression_prediction', None)
         try:
             # Validate before downloading or loading the model.
             format_sequence(sequence)
             with st.spinner('Loading model and predicting… First use may take longer.'):
                 expression, _ = predict(sequence)
-            st.metric('Predicted expression', f'{expression:.2f} / 100')
-            st.progress((max(1.0, min(100.0, expression)) - 1.0) / 99.0)
-            low, high = st.columns(2)
-            low.caption('1 · Lower expression')
-            high.markdown('<p style="text-align:right;color:gray;font-size:14px">100 · Higher expression</p>', unsafe_allow_html=True)
-            if expression < 1 or expression > 100:
-                st.caption('Prediction is outside the training range; the bar stops at the nearest endpoint.')
+            st.session_state['expression_prediction'] = expression
         except ValueError as exc:
             st.error(str(exc))
         except Exception:
             st.error('Prediction could not complete. The server may be starting or have insufficient memory. Please retry later.')
+    expression = st.session_state.get('expression_prediction')
+    if expression is not None:
+        st.metric('Predicted expression', f'{expression:.2f} / 100')
+    render_score_bar(expression)
+    if expression is not None and (expression < 1 or expression > 100):
+        st.caption('Prediction is outside the training range; the bar stops at the nearest endpoint.')
     st.caption('Higher values mean higher predicted expression. Research estimate for related synthetic E. coli sequences.')
     st.divider()
     st.caption('Research demonstration · Academic/non-commercial restrictions apply. '
