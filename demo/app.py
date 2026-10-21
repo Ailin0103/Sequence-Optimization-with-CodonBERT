@@ -3,6 +3,7 @@ import streamlit as st
 import json
 import math
 import re
+from pathlib import Path
 
 MODEL_ID = 'Ailin0103/CodonBERT-Cambray-expression-regression'
 REVISION = '2ce33e5883615b82bd5d724642ab4ace4512a001'
@@ -47,8 +48,18 @@ def predict(sequence):
     return round(prediction, 4), f'{length} nucleotides · {length // 3} codons. Output is on the original clean.lin.prot.mean scale.'
 
 
+def load_reference():
+    return json.loads(Path(__file__).with_name('expression_reference.json').read_text())
+
+
+def expression_score(expression, reference):
+    raw_score = 100 * (expression - reference['minimum']) / (reference['maximum'] - reference['minimum'])
+    return max(0.0, min(100.0, raw_score)), raw_score
+
+
 def main():
     st.set_page_config(page_title='CodonBERT · Protein expression', page_icon='🧬', layout='centered')
+    reference = load_reference()
     st.caption('CODONBERT · RESEARCH DEMO')
     st.title('Predict protein expression')
     st.write('Paste a DNA or RNA coding sequence. This model was fine-tuned on the Cambray synthetic **E. coli** library.')
@@ -66,15 +77,34 @@ def main():
             format_sequence(sequence)
             with st.spinner('Loading model and predicting… First use may take longer.'):
                 expression, detail = predict(sequence)
-            st.metric('Predicted protein expression', f'{expression:.4f}')
+            score, raw_score = expression_score(expression, reference)
+            st.metric('Relative expression score (0–100)', f'{score:.2f} / 100')
+            st.progress(score / 100)
+            st.caption(f'Original-scale prediction: {expression:.4f} · clean.lin.prot.mean')
+            if raw_score < 0 or raw_score > 100:
+                st.info('The original prediction falls outside the observed training range. '
+                        'The displayed score is capped at 0 or 100; the original prediction is shown unchanged.')
             st.caption(detail)
         except ValueError as exc:
             st.error(str(exc))
         except Exception:
             st.error('Prediction could not complete. The server may be starting or have insufficient memory. Please retry later.')
+    st.subheader('Score reference')
+    st.markdown(f"**0 points** = training minimum ({reference['minimum']:.2f}) · "
+                f"**50 points** = range midpoint ({(reference['minimum'] + reference['maximum']) / 2:.2f}) · "
+                f"**100 points** = training maximum ({reference['maximum']:.2f})")
+    median_score, _ = expression_score(reference['median'], reference)
+    p05_score, _ = expression_score(reference['p05'], reference)
+    p95_score, _ = expression_score(reference['p95'], reference)
+    st.caption(f"Based on {reference['count']:,} training sequences only. Training median: {median_score:.2f} points; "
+               f"middle 90% of observed training values: {p05_score:.2f}–{p95_score:.2f} points.")
     with st.expander('How to interpret the result', expanded=True):
-        st.write('The output is automatically converted back to the original clean.lin.prot.mean scale. '
-                 'It is an exploratory estimate, not a universal physical concentration or an experimental measurement.')
+        st.write('Higher scores mean higher predicted expression, not better fitness, confidence, accuracy, or a percentile. '
+                 'The 0–100 display is a linear rescaling of the training range, not the model’s training z-score.')
+        st.code('score = 100 × (original_prediction − 1) / (100 − 1)', language=None)
+        st.write('The model output is first converted back to clean.lin.prot.mean using training mean and standard deviation. '
+                 'The display score is then capped to 0–100. Original predictions remain visible. '
+                 'The reference range describes training data; it is not a prediction interval or physical concentration.')
         st.write('Training sequences were 96 nt. Other supported lengths may be outside the training distribution. '
                  'Generalization beyond this synthetic E. coli library has not been established.')
         st.caption('Published held-out test RMSE: 14.0871. This is a dataset-level metric, not an uncertainty interval for your sequence.')

@@ -3,6 +3,7 @@
 Public-facing UI for the released Cambray protein-expression regression model.
 The app accepts DNA/RNA coding sequences, validates codon alignment and length,
 and reverses target standardization to the original `clean.lin.prot.mean` scale.
+The main result is a 0–100 relative expression score, with the original prediction retained.
 No training data, test-set evaluation, or credentials are needed for inference.
 
 ## Run locally
@@ -27,7 +28,7 @@ installations use the CPU PyTorch wheel index to avoid unnecessary CUDA librarie
    - Main file path: `demo/app.py`
 3. In Advanced settings select Python **3.11**. No secrets are required.
 4. Choose an available app subdomain and deploy.
-5. Verify `ATGGCC` returns approximately **36.9457**. Invalid `ATN` should
+5. Verify `ATGGCC` returns approximately **36.31 / 100** (original prediction **36.9457**). Invalid `ATN` should
    display a validation error. This is a smoke test, not biological validation.
 
 Streamlit finds `demo/requirements.txt` next to the entry point; do not use the
@@ -44,3 +45,17 @@ The code pins the verified weight revision. Training sequences were 96 nt;
 external generalization is unestablished. The 6 nt example verifies execution
 only. Academic/non-commercial upstream restrictions apply. No sequences are
 intentionally stored by the app, but hosting-provider request logs may exist.
+
+## Display score reference
+
+`expression_reference.json` contains aggregate training-split statistics, generated
+by `pixi run python demo/build_reference.py`. It reproduces established cleaning
+and the seed-42 training split, verifies mean/std against the saved scaler, and
+never evaluates a model or computes held-out statistics. No raw rows are published.
+
+Observed training expression spans 1–100. Display score is
+`100 * (original_prediction - 1) / 99`, capped to [0, 100]. The original
+prediction is not clipped and remains visible. Scores indicate relative expression,
+not confidence, accuracy, percentile, or fitness. 50 points is the range midpoint,
+not the training median. Reference percentiles describe the training distribution,
+not uncertainty for a prediction.

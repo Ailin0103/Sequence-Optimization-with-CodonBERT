@@ -1,0 +1,14 @@
+{
+  "target_column": "clean.lin.prot.mean",
+  "reference_population": "training split only",
+  "split_seed": 42,
+  "count": 193815,
+  "minimum": 1.0,
+  "p05": 9.264796592616753,
+  "median": 48.9059864392447,
+  "p95": 92.02055691750209,
+  "maximum": 100.0,
+  "mean": 49.90014398997007,
+  "sample_std": 26.456209845490434,
+  "note": "Observed training distribution, not hard output bounds or a prediction interval."
+}
