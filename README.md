@@ -1,420 +1,98 @@
-# Sequence Optimization with CodonBERT
+# CodonBERT for Protein-Expression Regression
 
-Fine-tuning a pretrained codon-level language model to predict protein expression and prioritize candidate sequences for experimental validation.
+Supervised fine-tuning and evaluation of pretrained CodonBERT on experimentally measured protein expression.
 
-## Overview
+## CodonBERT background
 
-This project evaluates whether **CodonBERT** can learn sequence features associated with protein production in *E. coli* and whether improved prediction accuracy translates into more efficient downstream sequence screening.
+[CodonBERT](https://huggingface.co/lhallee/CodonBERT) is a pretrained codon-level transformer for representations of coding/mRNA sequences. Codon tokenization follows biologically meaningful triplets rather than arbitrary individual characters. Pretraining provides a starting representation; accurate expression prediction requires task-specific supervision and evaluation.
 
-The final workflow is:
+## What this project specializes
 
-```text
-Coding sequence
-      ↓
-Protein-expression prediction
-      ↓
-CodonBERT vs. 7-mer TF-IDF baseline
-      ↓
-Screening for a fitness-favorable expression range
-      ↓
-Candidate prioritization for experimental validation
-```
-
-The final CodonBERT model was trained on more than 190,000 experimental sequences and substantially outperformed a full-data 7-mer TF-IDF Ridge baseline.
-
-On the held-out test set, CodonBERT achieved:
-
-- **R² = 0.719**
-- **RMSE = 14.09**
-- **Spearman = 0.856**
-
-For downstream screening, CodonBERT achieved **1.78× enrichment** while reducing the experimental candidate pool by **54.5%** at approximately 81% recall.
-
----
-
-## Data
-
-The final supervised modeling experiments use **Supplementary Data 15** from:
-
-> Cambray G, Guimaraes JC, Arkin AP.  
-> *Evaluation of 244,000 synthetic sequences reveals design principles to optimize translation in Escherichia coli.*  
-> Nature Biotechnology, 2018.
-
-The dataset contains designed nucleotide sequences together with experimentally measured protein production, cellular growth, RNA abundance, and polysome phenotypes.
-
-The final prediction task uses:
+This project adapts pretrained CodonBERT to continuous regression using approximately 242K synthetic *E. coli* sequences from Cambray et al. Input is `gs.sequence`, target is experimentally measured protein production (`clean.lin.prot.mean`). Full supervised fine-tuning is compared against a 7-mer TF-IDF + Ridge baseline.
 
 ```text
-Input:   gs.sequence
-Target:  clean.lin.prot.mean
+Pretrained CodonBERT
+        ↓
+Cambray E. coli sequences
+        ↓
+Supervised fine-tuning
+        ↓
+Protein-expression regression
 ```
 
-After filtering for valid sequences and non-missing protein-expression measurements:
+## Dataset
 
-```text
-Total usable sequences: 242,269
+Cambray et al. Supplementary Data 15 yields 242,269 usable sequences after cleaning. The fixed split uses seed 42: 193,815 training, 24,227 validation, and 24,227 test sequences (80/10/10). Missing or nonnumeric targets and invalid/frame-misaligned sequences are excluded. DNA is converted to RNA and formatted as non-overlapping codons; sequences exceeding 62 codons raise an error.
 
-Train:       193,815
-Validation:   24,227
-Test:         24,227
-```
-
-Raw datasets are not included in this repository.
-
-After obtaining Supplementary Data 15 from the original study, place it at:
+Raw data are not redistributed. Place the original CSV at:
 
 ```text
 data/Supplementary_Data_15_Integrated_Phenotypic_Measurements.csv
 ```
 
----
+## Modeling approach
 
-## Models
+**7-mer TF-IDF + Ridge:** overlapping nucleotide 7-mers, TF-IDF features, Ridge alpha 1.0 (reported vocabulary: 16,345).
 
-### 7-mer TF-IDF + Ridge Baseline
+**Fine-tuned CodonBERT:** `lhallee/CodonBERT` with a scalar regression head, full-model fine-tuning, learning rate `1e-5`, three epochs, batch size 16. Targets use training-set mean and sample standard deviation. Metrics are computed after reversing standardization.
 
-A conventional sequence baseline was constructed by converting each nucleotide sequence into overlapping 7-mers, applying TF-IDF, and fitting Ridge regression.
+## Training behavior
 
-```text
-Sequence
-   ↓
-Overlapping 7-mers
-   ↓
-TF-IDF
-   ↓
-Ridge regression
-   ↓
-Protein expression
-```
+![Training and validation loss](results/figures/codonbert_training_loss.png)
 
-Final configuration:
+Extracted from the existing final training run's `checkpoint-36342/trainer_state.json`; no retraining was required. Training loss is logged every 100 steps and validation loss once per epoch. Both are MSE on standardized targets; lines connect observations at their actual logged epochs.
 
-```text
-k = 7
-Ridge alpha = 1.0
-Vocabulary size = 16,345
-```
+Validation loss fell from 0.391 to 0.315 to 0.294 across the three epochs. Optimization progressed with smaller validation gains in the final epoch; these observations do not establish full convergence. There is no validation-loss upturn indicating obvious overfitting within this horizon. Underlying observations are in `results/training_history.csv`.
 
-### CodonBERT
+## Final regression results
 
-DNA sequences are converted to RNA and tokenized into non-overlapping codons before being passed to the pretrained CodonBERT model.
-
-```text
-DNA sequence
-     ↓
-RNA conversion
-     ↓
-Codon tokenization
-     ↓
-Pretrained CodonBERT
-     ↓
-Regression head
-     ↓
-Protein expression
-```
-
-The final model uses full supervised fine-tuning:
-
-```text
-Learning rate:  1e-5
-Epochs:         3
-Batch size:     16
-Training size:  193,815 sequences
-```
-
-The regression target is standardized using training-set statistics during optimization and transformed back to the original protein-expression scale for evaluation.
-
----
-
-## Protein-Expression Prediction
-
-Both models were evaluated on the same held-out test set.
+Previously reported held-out test results, preserved unchanged:
 
 | Model | RMSE ↓ | R² ↑ | Pearson ↑ | Spearman ↑ |
 |---|---:|---:|---:|---:|
 | 7-mer TF-IDF + Ridge | 17.87 | 0.547 | 0.740 | 0.745 |
 | **Fine-tuned CodonBERT** | **14.09** | **0.719** | **0.855** | **0.856** |
 
-Compared with the full-data k-mer baseline, CodonBERT:
+CodonBERT reduced RMSE by approximately 21% relative to the baseline. Precise values are in `results/model_comparison.csv`. No new test evaluation was performed during framework preparation.
 
-- reduced RMSE by approximately **21%**
-- increased R² from **0.547 to 0.719**
-- increased Spearman correlation from **0.745 to 0.856**
-
-These results indicate that supervised CodonBERT fine-tuning captures predictive sequence information beyond overlapping k-mer frequency features.
-
-Summary results are stored in:
+## Repository structure
 
 ```text
-results/model_comparison.csv
+src/          model training, curve extraction, release preparation
+results/      compact regression metrics, authentic training history, figure
+release/      Hugging Face model card and inference example
+archive/      historical experiments and screening script/results
+exploratory/  earlier modeling experiments
+validation/   historical tokenizer/model sanity checks
+pipeline/     earlier data engineering utilities
+models/       local checkpoints and release assets (ignored)
+data/         local raw data (ignored)
 ```
 
----
+## Installation and reproduction
 
-## Fitness-Favorable Expression Screening
-
-The Cambray dataset also provides relative cellular growth under normal translation initiation conditions (`growth.aggregate.R`).
-
-Analysis of measured protein production and cellular growth showed a non-monotonic relationship.
-
-A quadratic fit estimated the population-level growth optimum at:
-
-```text
-PNI ≈ 45.7
-```
-
-and decile analysis showed a broad near-maximal fitness region at intermediate protein-production levels.
-
-Based on these observations, this project defines:
-
-```text
-PNI 40–60
-```
-
-as an **operational fitness-favorable expression range** for downstream candidate screening.
-
-This range is not a threshold defined by Cambray et al., and it does not imply that every sequence with PNI 40–60 has high cellular fitness. It represents a protein-expression region associated with near-maximal average growth in this dataset.
-
----
-
-## Screening Strategy
-
-The regression models are not retrained for this task.
-
-Instead, the validation set is used to identify a predicted-expression interval that:
-
-1. recovers at least **80%** of sequences whose measured PNI lies between 40 and 60; and
-2. maximizes enrichment among selected candidates.
-
-The resulting screening interval is then frozen and evaluated on the held-out test set.
-
-Validation-selected intervals were:
-
-```text
-7-mer Ridge:  predicted PNI 33–65
-CodonBERT:    predicted PNI 30–71
-```
-
-The wider prediction intervals account for regression uncertainty while maintaining high recall.
-
----
-
-## Screening Results
-
-| Model | Recall | Precision | Enrichment | Pool Reduction | Candidates Selected |
-|---|---:|---:|---:|---:|---:|
-| 7-mer TF-IDF + Ridge | 80.26% | 31.35% | 1.40× | 42.78% | 13,863 |
-| **CodonBERT** | **80.83%** | **39.70%** | **1.78×** | **54.50%** | **11,024** |
-
-The prevalence of favorable sequences in the unscreened test population was **22.35%**.
-
-After CodonBERT screening, **39.70%** of selected candidates were truly within the favorable PNI range, corresponding to **1.78× enrichment**.
-
-At approximately matched recall, CodonBERT:
-
-```text
-selected 2,839 fewer candidates
-```
-
-while recovering slightly more favorable sequences:
-
-```text
-7-mer Ridge:
-    4,346 favorable sequences recovered
-    13,863 sequences selected
-
-CodonBERT:
-    4,377 favorable sequences recovered
-    11,024 sequences selected
-```
-
-This demonstrates that improved regression performance translates into more efficient candidate prioritization for downstream experimental validation.
-
-Summary results are stored in:
-
-```text
-results/screening_comparison.csv
-```
-
----
-
-## Model Development
-
-The final workflow was developed through several earlier experiments retained in `exploratory/`.
-
-These included:
-
-- pretrained CodonBERT embedding extraction
-- PCA-based representation analysis
-- frozen and partially frozen CodonBERT models
-- masked-language-model fine-tuning experiments
-- smaller 10,000-sequence supervised experiments
-- comparison with RNA-based pretrained models
-
-Early frozen and partially frozen representations showed limited task-specific predictive performance.
-
-This motivated two important changes:
-
-1. standardizing the continuous protein-expression target during training
-2. performing full end-to-end supervised fine-tuning
-
-Scaling the final approach to the complete Cambray dataset produced the performance reported above.
-
----
-
-## Early Data Engineering Pipeline
-
-Earlier stages of the project also explored scalable processing of public biological sequence data.
-
-The workflow included:
-
-```text
-FASTA ingestion
-      ↓
-AWS S3 storage and streaming
-      ↓
-PostgreSQL / Amazon RDS
-      ↓
-CodonBERT embedding extraction
-      ↓
-Representation analysis
-```
-
-This infrastructure is retained under:
-
-```text
-pipeline/
-```
-
-and is separate from the final Cambray supervised benchmark.
-
-Account-specific AWS/RDS configuration is not stored in the repository. A local configuration can be created from:
-
-```text
-pipeline/config.example.py
-```
-
----
-
-## Validation and Sanity Checks
-
-Small-scale experiments were used to verify:
-
-- CodonBERT checkpoint/tokenizer compatibility
-- codon tokenization
-- sequence preprocessing
-- model forward passes
-- training-pipeline functionality
-
-A small *E. coli* task was used as a pipeline sanity check rather than as a final benchmark.
-
-These utilities are retained under:
-
-```text
-validation/
-```
-
----
-
-## Repository Structure
-
-```text
-Sequence-Optimization-with-CodonBERT/
-│
-├── src/
-│   ├── train_codonbert_regression.py
-│   ├── train_kmer_baseline.py
-│   └── evaluate_favorable_expression_screening.py
-│
-├── exploratory/
-│   └── earlier modeling and representation experiments
-│
-├── pipeline/
-│   └── AWS / PostgreSQL / FASTA processing utilities
-│
-├── validation/
-│   └── tokenizer and model sanity checks
-│
-├── archive/
-│   └── deprecated experiments
-│
-├── results/
-│   ├── model_comparison.csv
-│   └── screening_comparison.csv
-│
-├── data/
-│   └── local raw data (not tracked by Git)
-│
-├── pyproject.toml
-├── pixi.lock
-└── README.md
-```
-
----
-
-## Installation
-
-1. Install `pixi` package management tool:
-
-    ``` bash
-    curl -fsSL https://pixi.sh/install.sh | sh
-    ```
-
-2. Install python environment using `pixi`:
-
-    ``` bash
-    pixi install
-    ```
-
-
----
-
-## Reproducing the Final Experiments
-
-Place Supplementary Data 15 at:
-
-```text
-data/Supplementary_Data_15_Integrated_Phenotypic_Measurements.csv
-```
-
-Train the full-data k-mer baseline:
+Install the project environment with `pixi install`. From the repository root:
 
 ```bash
-pixi run python src/train_kmer_baseline.py
+# Rebuild the loss curve from the existing local logs.
+pixi run python src/plot_training_history.py --state models/cambray_codonbert_regression/checkpoint-36342/trainer_state.json
+
+# Validate existing local release files and add the model card; no upload.
+pixi run python src/prepare_model_release.py
 ```
 
-Fine-tune CodonBERT:
+Train the baseline or fine-tune CodonBERT using `src/train_kmer_baseline.py` and `src/train_codonbert_regression.py`, respectively. These scripts perform full training and held-out test evaluation.
 
-```bash
-pixi run python src/train_codonbert_regression.py
-```
+## Hugging Face model
 
-Evaluate favorable-expression screening:
+The existing local `models/cambray_codonbert_regression/final_model/` contains weights, regression configuration, tokenizer, and `target_scaler.json`. The [model card](release/README.md) documents training, evaluation, limitations, and an inference example reversing target standardization. Release preparation validates those assets and copies the card beside them.
 
-```bash
-pixi run python src/evaluate_favorable_expression_screening.py
-```
+No upload has been performed. Hugging Face authentication, destination repository selection, and an explicitly authorized upload remain manual. The [upstream model card](https://huggingface.co/lhallee/CodonBERT) supplies academic/non-commercial license terms that must be respected in release preparation.
 
-The screening rule is selected using the validation set and evaluated using the held-out test set.
+## Limitations
 
----
-
-## Limitations and Future Work
-
-The current downstream screening strategy predicts **protein expression**, rather than cellular fitness directly.
-
-The PNI 40–60 target is based on a population-level association between intermediate protein production and near-maximal average cellular growth. Individual sequences within the same protein-expression range may still differ substantially in fitness.
-
-Therefore, selected sequences should be interpreted as **enriched candidates for experimental validation**, not as sequences guaranteed to have optimal cellular fitness.
-
-A natural extension would jointly predict protein production and cellular fitness and prioritize candidates based on both phenotypes.
-
----
+Training and evaluation cover one synthetic *E. coli* library. External generalization across organisms, coding-sequence distributions, or experimental conditions has not been established. Predictions are exploratory estimates, not experimentally validated expression values for arbitrary sequences. A random split within this library does not demonstrate transfer to unrelated sequence families.
 
 ## Reference
 
-Cambray G, Guimaraes JC, Arkin AP.  
-*Evaluation of 244,000 synthetic sequences reveals design principles to optimize translation in Escherichia coli.*  
-Nature Biotechnology, 2018.
-
-
+Cambray G, Guimaraes JC, Arkin AP. *Evaluation of 244,000 synthetic sequences reveals design principles to optimize translation in Escherichia coli.* Nature Biotechnology, 2018.

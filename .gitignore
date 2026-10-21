@@ -22,3 +22,6 @@ legacy/
 *.pem
 *.key
 credentials
+
+# Historical experiments
+/archive/

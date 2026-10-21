@@ -1,10 +1,7 @@
-# Final Results
+# Result artifacts
 
-This directory contains compact summary results from the final Cambray protein-expression experiments.
+- `model_comparison.csv`: previously reported held-out test metrics on the original expression scale; unchanged.
+- `training_history.csv`: authentic training/validation loss observations extracted from the final run's `checkpoint-36342/trainer_state.json`.
+- `figures/codonbert_training_loss.png`: loss on standardized targets at actual logged epochs.
 
-- `model_comparison.csv`: held-out test regression performance for the 7-mer TF-IDF Ridge baseline and fine-tuned CodonBERT.
-- `screening_comparison.csv`: favorable-expression screening performance. The favorable experimental range is defined as PNI 40-60, based on the region associated with near-maximal average cellular fitness in the Cambray dataset.
-
-Prediction intervals were selected using the validation set with a minimum recall requirement of 80% and then evaluated once on the held-out test set.
-
-Large prediction files, model checkpoints, and raw datasets are not stored in this repository.
+Historical screening summaries and their script are retained in `archive/`. Raw data, large prediction files, and checkpoints remain outside Git.

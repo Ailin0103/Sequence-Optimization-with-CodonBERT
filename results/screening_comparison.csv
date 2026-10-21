@@ -1,3 +1,0 @@
-model,prediction_interval,recall,precision,enrichment,pool_retained,pool_reduction,selected_candidates,true_favorable_recovered
-7-mer TF-IDF + Ridge,33-65,0.8026,0.3135,1.40,0.5722,0.4278,13863,4346
-CodonBERT,30-71,0.8083,0.3970,1.78,0.4550,0.5450,11024,4377
