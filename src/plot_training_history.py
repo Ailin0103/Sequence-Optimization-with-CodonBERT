@@ -21,7 +21,7 @@ def main():
     if not any(row['training_loss'] != '' for row in rows) or not any(row['validation_loss'] != '' for row in rows):
         raise ValueError('Both training and validation loss history are required')
     with (ROOT / 'results/training_history.csv').open('w', newline='') as handle:
-        writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
+        writer = csv.DictWriter(handle, fieldnames=rows[0].keys(), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     plt.rcParams.update({'font.size': 10, 'axes.spines.top': False, 'axes.spines.right': False})
